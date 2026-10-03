@@ -1,0 +1,8 @@
+{
+  "name": "COLORLINK - Transformación Digital Inteligente en Pintura y Recubrimientos",
+  "description": "Plataforma empresarial para la gestión, clasificación técnica con IA Gemini, trazabilidad y control de proyectos de pintura y recubrimientos industriales y comerciales.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}

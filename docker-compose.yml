@@ -1,0 +1,70 @@
+version: '3.8'
+
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: colorlink_mysql
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_PASSWORD:-""}
+      MYSQL_DATABASE: colorlink_db
+      MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      - ./database/scripts:/docker-entrypoint-initdb.d
+    networks:
+      - colorlink_net
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: colorlink_backend
+    restart: always
+    environment:
+      MYSQL_HOST: mysql
+      MYSQL_PORT: 3306
+      MYSQL_DB: colorlink_db
+      MYSQL_USER: root
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-""}
+      DATABASE_URL: mysql+aiomysql://root:${MYSQL_PASSWORD:-""}@mysql:3306/colorlink_db?charset=utf8mb4
+      SYNC_DATABASE_URL: mysql+pymysql://root:${MYSQL_PASSWORD:-""}@mysql:3306/colorlink_db?charset=utf8mb4
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-""}
+      JWT_SECRET: super_secure_jwt_secret_colorlink_2026_enterprise_key_9988
+      BACKEND_CORS_ORIGINS: '["http://localhost:3000","http://localhost:8501","http://127.0.0.1:3000","http://127.0.0.1:8501"]'
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - colorlink_net
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: colorlink_frontend
+    restart: always
+    environment:
+      BACKEND_API_URL: http://backend:8000/api/v1
+    ports:
+      - "8501:8501"
+    depends_on:
+      - backend
+    networks:
+      - colorlink_net
+
+volumes:
+  mysql_data:
+
+networks:
+  colorlink_net:
+    driver: bridge
